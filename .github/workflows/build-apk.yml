@@ -25,8 +25,29 @@ jobs:
           mkdir -p www
           cp "$(ls *.html | head -1)" www/index.html
 
+      - name: Fix back button
+        run: |
+          cat > snippet.html <<'SNIP'
+          <script>
+          (function(){
+            var C=window.Capacitor,A=C&&C.Plugins&&C.Plugins.App;
+            if(!A)return;
+            A.addListener('backButton',function(){
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            });
+            var y=document.getElementById('xy');
+            if(y)y.addEventListener('click',function(){
+              setTimeout(function(){A.exitApp()},300);
+            });
+          })();
+          </script>
+          SNIP
+          python3 -c "p='www/index.html';s=open(p,encoding='utf-8').read();n=open('snippet.html',encoding='utf-8').read();i=s.rfind('</body>');s=s[:i]+n+s[i:] if i>=0 else s+n;open(p,'w',encoding='utf-8').write(s)"
+
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/app@6
 
       - name: Add Android platform
         run: npx cap add android
